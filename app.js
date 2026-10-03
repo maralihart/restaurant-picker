@@ -1,9 +1,11 @@
-import { restaurants, filterRestaurants, chooseRestaurant } from "./restaurants.js";
+import { restaurants, filterRestaurants, chooseRestaurant, restaurantShareUrl } from "./restaurants.js";
 
 const filters = document.querySelector("#filters");
 const wheel = document.querySelector("#wheel");
+const wheelCenter = document.querySelector("#wheel-center");
 const spinButton = document.querySelector("#spin-button");
 const result = document.querySelector("#result");
+const resultDialog = document.querySelector("#result-dialog");
 const tabs = [...document.querySelectorAll('[role="tab"]')];
 let matches = restaurants;
 let rotation = 0;
@@ -80,7 +82,9 @@ function renderTable() {
 
 function showResult(restaurant) {
   result.replaceChildren();
-  result.append(element("p", "YOUR NEXT STOP", "eyebrow"), element("h2", restaurant.name), element("p", restaurant.cuisine, "result-cuisine"));
+  const heading = element("h2", restaurant.name);
+  heading.id = "result-title";
+  result.append(element("p", "YOUR NEXT STOP", "eyebrow"), heading, element("p", restaurant.cuisine, "result-cuisine"));
   const tags = element("div", "", "result-tags");
   tags.append(element("span", restaurant.distanceLabel), element("span", restaurant.price));
   const details = element("dl", "", "result-details");
@@ -89,7 +93,10 @@ function showResult(restaurant) {
   }
   const link = yelpLink(restaurant, "Check it out on Yelp ↗");
   link.className = "result-link";
-  result.append(tags, details, link);
+  const share = element("a", "Text a friend ✉", "share-link");
+  share.href = restaurantShareUrl(restaurant);
+  result.append(tags, details, link, share);
+  resultDialog.showModal();
 }
 
 function update() {
@@ -97,6 +104,7 @@ function update() {
   matches = filterRestaurants(restaurants, Object.fromEntries(new FormData(filters)));
   document.querySelector("#match-count").textContent = `${matches.length} of ${restaurants.length} spots`;
   spinButton.disabled = matches.length === 0;
+  wheelCenter.disabled = matches.length === 0;
   document.querySelector("#spin-note").textContent = matches.length
     ? "Every spot has an equal shot. Trust the wheel."
     : "No matches. Broaden your filters to bring dinner back.";
@@ -140,7 +148,7 @@ tabs.forEach((tab, index) => {
   });
 });
 
-spinButton.addEventListener("click", () => {
+function spin() {
   if (spinning || !matches.length) return;
   const restaurant = chooseRestaurant(matches);
   const index = matches.indexOf(restaurant);
@@ -148,6 +156,7 @@ spinButton.addEventListener("click", () => {
   rotation += 360 * 5 + (target - rotation % 360 + 360) % 360;
   spinning = true;
   spinButton.disabled = true;
+  wheelCenter.disabled = true;
   spinButton.textContent = "Deciding dinner…";
   for (const control of filters.elements) control.disabled = true;
   result.replaceChildren(element("h2", "Round and round…"), element("p", "One good dinner, coming right up."));
@@ -155,12 +164,16 @@ spinButton.addEventListener("click", () => {
   const finish = () => {
     spinning = false;
     spinButton.disabled = false;
+    wheelCenter.disabled = false;
     spinButton.textContent = "Spin again ↻";
     for (const control of filters.elements) control.disabled = false;
     showResult(restaurant);
   };
   setTimeout(finish, window.matchMedia("(prefers-reduced-motion: reduce)").matches ? 0 : 3900);
-});
+}
+spinButton.addEventListener("click", spin);
+wheelCenter.addEventListener("click", spin);
+document.querySelector("#close-result").addEventListener("click", () => resultDialog.close());
 
 drawWheel();
 renderTable();

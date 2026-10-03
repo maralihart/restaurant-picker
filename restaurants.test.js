@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { restaurants, filterRestaurants, chooseRestaurant } from "./restaurants.js";
+import { restaurants, filterRestaurants, chooseRestaurant, restaurantShareUrl } from "./restaurants.js";
 
 test("all 18 supplied restaurants have complete details and safe Yelp links", () => {
   assert.equal(restaurants.length, 18);
@@ -53,4 +53,14 @@ test("selection handles zero, one, and every possible matching restaurant", () =
   }
   assert.equal(chooseRestaurant(restaurants, () => 0), restaurants[0]);
   assert.equal(chooseRestaurant(restaurants, () => .999999), restaurants.at(-1));
+});
+
+test("text share link includes the restaurant name, address, and Yelp URL", () => {
+  const restaurant = restaurants[0];
+  const shareUrl = new URL(restaurantShareUrl(restaurant));
+  const message = shareUrl.searchParams.get("body");
+  assert.equal(shareUrl.protocol, "sms:");
+  assert.ok(message.includes(restaurant.name));
+  assert.ok(message.includes(restaurant.location));
+  assert.ok(message.includes(restaurant.yelp));
 });
