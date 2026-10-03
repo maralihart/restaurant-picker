@@ -45,3 +45,8 @@ export function filterRestaurants(list, { search = "", cuisine = "", distance = 
 export function chooseRestaurant(list, random = Math.random) {
   return list.length ? list[Math.floor(random() * list.length)] : null;
 }
+
+export function restaurantShareUrl(restaurant) {
+  const message = `Let's try ${restaurant.name}!\n${restaurant.location}\n${restaurant.yelp}`;
+  return `sms:?body=${encodeURIComponent(message)}`;
+}
