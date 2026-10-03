@@ -46,7 +46,15 @@ export function chooseRestaurant(list, random = Math.random) {
   return list.length ? list[Math.floor(random() * list.length)] : null;
 }
 
-export function restaurantShareUrl(restaurant) {
-  const message = `Let's try ${restaurant.name}!\n${restaurant.location}\n${restaurant.yelp}`;
-  return `sms:?body=${encodeURIComponent(message)}`;
+export function restaurantFilterUrl(filters, baseUrl) {
+  const url = new URL(baseUrl);
+  for (const name of ["search", "cuisine", "distance", "price", "service"]) {
+    url.searchParams.delete(name);
+    if (filters[name]) url.searchParams.set(name, filters[name]);
+  }
+  return url.href;
+}
+
+export function restaurantShareMessage(restaurant, filters, baseUrl) {
+  return `Let's try ${restaurant.name}!\n\nAddress: ${restaurant.location}\n\nYelp: ${restaurant.yelp}\n\nDon't like this? Spin again at ${restaurantFilterUrl(filters, baseUrl)}`;
 }

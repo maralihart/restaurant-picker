@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { restaurants, filterRestaurants, chooseRestaurant, restaurantShareUrl } from "./restaurants.js";
+import { restaurants, filterRestaurants, chooseRestaurant, restaurantFilterUrl, restaurantShareMessage } from "./restaurants.js";
 
 test("all 18 supplied restaurants have complete details and safe Yelp links", () => {
   assert.equal(restaurants.length, 18);
@@ -55,12 +55,24 @@ test("selection handles zero, one, and every possible matching restaurant", () =
   assert.equal(chooseRestaurant(restaurants, () => .999999), restaurants.at(-1));
 });
 
-test("text share link includes the restaurant name, address, and Yelp URL", () => {
+test("filter deeplinks preserve all active filters and clear inactive ones", () => {
+  const url = new URL(restaurantFilterUrl(
+    { search: "Korean food", cuisine: "Korean", distance: "", price: "2", service: "takeout" },
+    "https://example.com/picker/?distance=5&old=1#spin",
+  ));
+  assert.equal(url.searchParams.get("search"), "Korean food");
+  assert.equal(url.searchParams.get("cuisine"), "Korean");
+  assert.equal(url.searchParams.has("distance"), false);
+  assert.equal(url.searchParams.get("price"), "2");
+  assert.equal(url.searchParams.get("service"), "takeout");
+  assert.equal(url.searchParams.get("old"), "1");
+  assert.equal(url.hash, "#spin");
+});
+
+test("share message includes the restaurant details and deeplinked filters", () => {
   const restaurant = restaurants[0];
-  const shareUrl = new URL(restaurantShareUrl(restaurant));
-  const message = shareUrl.searchParams.get("body");
-  assert.equal(shareUrl.protocol, "sms:");
-  assert.ok(message.includes(restaurant.name));
-  assert.ok(message.includes(restaurant.location));
-  assert.ok(message.includes(restaurant.yelp));
+  const message = restaurantShareMessage(restaurant, { distance: "5", service: "takeout" }, "https://example.com/picker/");
+  assert.ok(message.startsWith(`Let's try ${restaurant.name}!\n\nAddress: ${restaurant.location}`));
+  assert.ok(message.includes(`Yelp: ${restaurant.yelp}`));
+  assert.ok(message.endsWith("Don't like this? Spin again at https://example.com/picker/?distance=5&service=takeout"));
 });

@@ -1,4 +1,4 @@
-import { restaurants, filterRestaurants, chooseRestaurant, restaurantShareUrl } from "./restaurants.js";
+import { restaurants, filterRestaurants, chooseRestaurant, restaurantFilterUrl, restaurantShareMessage } from "./restaurants.js";
 
 const filters = document.querySelector("#filters");
 const wheel = document.querySelector("#wheel");
@@ -94,17 +94,42 @@ function showResult(restaurant) {
   for (const [label, value] of [["Find it", restaurant.location], ["Hours", restaurant.hours], ["Dining", restaurant.service]]) {
     details.append(element("dt", label), element("dd", value));
   }
-  const link = yelpLink(restaurant, "Check it out on Yelp ↗");
+  const link = yelpLink(restaurant, "View on Yelp ↗");
   link.className = "result-link";
-  const share = element("a", "Text a friend ✉", "share-link");
-  share.href = restaurantShareUrl(restaurant);
-  result.append(tags, details, link, share);
+  const share = element("button", "Share", "share-link");
+  share.type = "button";
+  share.addEventListener("click", async () => {
+    const message = restaurantShareMessage(restaurant, Object.fromEntries(new FormData(filters)), window.location.href);
+    try {
+      if (navigator.share) {
+        await navigator.share({ title: `Let's try ${restaurant.name}!`, text: message });
+        return;
+      }
+      await navigator.clipboard.writeText(message);
+      share.textContent = "Copied!";
+      setTimeout(() => { share.textContent = "Share"; }, 2000);
+    } catch (error) {
+      if (error.name === "AbortError") return;
+      try {
+        await navigator.clipboard.writeText(message);
+        share.textContent = "Copied!";
+        setTimeout(() => { share.textContent = "Share"; }, 2000);
+      } catch {
+        share.textContent = "Share unavailable";
+      }
+    }
+  });
+  const actions = element("div", "", "result-actions");
+  actions.append(link, share);
+  result.append(tags, details, actions);
   resultDialog.showModal();
 }
 
 function update() {
   if (spinning) return;
-  matches = filterRestaurants(restaurants, Object.fromEntries(new FormData(filters)));
+  const filterValues = Object.fromEntries(new FormData(filters));
+  matches = filterRestaurants(restaurants, filterValues);
+  window.history.replaceState(null, "", restaurantFilterUrl(filterValues, window.location.href));
   document.querySelector("#match-count").textContent = `${matches.length} of ${restaurants.length} spots`;
   spinButton.disabled = matches.length === 0;
   wheelCenter.disabled = matches.length === 0;
@@ -122,6 +147,9 @@ for (const cuisine of cuisineOptions) {
   const option = element("option", cuisine);
   option.value = cuisine;
   filters.elements.cuisine.append(option);
+}
+for (const name of ["search", "cuisine", "distance", "price", "service"]) {
+  filters.elements[name].value = new URLSearchParams(window.location.search).get(name) || "";
 }
 filters.addEventListener("submit", event => event.preventDefault());
 filters.addEventListener("input", update);
@@ -189,6 +217,4 @@ spinButton.addEventListener("click", spin);
 wheelCenter.addEventListener("click", spin);
 document.querySelector("#close-result").addEventListener("click", () => resultDialog.close());
 
-drawWheel();
-renderTable();
-document.querySelector("#match-count").textContent = `${restaurants.length} of ${restaurants.length} spots`;
+update();
