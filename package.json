@@ -1,0 +1,11 @@
+{
+  "name": "restaurant-picker",
+  "version": "1.0.0",
+  "description": "A dinner-decision wheel and restaurant guide near Sully Elementary.",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "node --test"
+  },
+  "license": "ISC"
+}
