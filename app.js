@@ -6,11 +6,14 @@ const wheelCenter = document.querySelector("#wheel-center");
 const spinButton = document.querySelector("#spin-button");
 const result = document.querySelector("#result");
 const resultDialog = document.querySelector("#result-dialog");
+const filterDialog = document.querySelector("#filter-dialog");
+const filterButton = document.querySelector("#open-filters");
 const tabs = [...document.querySelectorAll('[role="tab"]')];
 let matches = restaurants;
 let rotation = 0;
 let spinning = false;
 const svgNamespace = "http://www.w3.org/2000/svg";
+const mobileFilters = window.matchMedia("(max-width: 700px)");
 
 function element(tag, text, className) {
   const node = document.createElement(tag);
@@ -123,6 +126,17 @@ for (const cuisine of cuisineOptions) {
 filters.addEventListener("submit", event => event.preventDefault());
 filters.addEventListener("input", update);
 filters.addEventListener("reset", () => setTimeout(update, 0));
+function syncFilterDialog() {
+  if (mobileFilters.matches) {
+    if (filterDialog.open) filterDialog.close();
+  } else if (!filterDialog.open) {
+    filterDialog.show();
+  }
+}
+syncFilterDialog();
+mobileFilters.addEventListener("change", syncFilterDialog);
+filterButton.addEventListener("click", () => filterDialog.showModal());
+document.querySelector("#close-filters").addEventListener("click", () => filterDialog.close());
 
 function activateTab(tab) {
   for (const item of tabs) {
