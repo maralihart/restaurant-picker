@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f8f3e8">
+  <meta name="description" content="Spin your way to dinner. Explore and filter 18 restaurants near Sully Elementary in Sterling, Virginia.">
+  <title>Where to? — The Sully restaurant picker</title>
+  <link rel="stylesheet" href="./styles.css">
+  <script type="module" src="./app.js"></script>
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to content</a>
+  <header class="site-header">
+    <a class="wordmark" href="./" aria-label="Where to? home">where to<span>?</span></a>
+    <span class="local-note">THE SULLY NEIGHBORHOOD EDITION</span>
+    <span class="header-location">Sterling, VA <span aria-hidden="true">↗</span></span>
+  </header>
+  <main id="main">
+    <div class="intro">
+      <div><p class="eyebrow">GOOD TASTE. ZERO OVERTHINKING.</p><h1>Dinner is a<br><span>spin away.</span></h1></div>
+      <p class="intro-copy">The “what should we eat?” debate ends here.<br>18 local spots, one little nudge.<br><span>Starting from Sully Elementary.</span></p>
+    </div>
+    <div class="view-bar">
+      <div role="tablist" aria-label="Restaurant views">
+        <button id="spin-tab" role="tab" aria-selected="true" aria-controls="spin-panel">Spin the wheel <span aria-hidden="true">↗</span></button>
+        <button id="table-tab" role="tab" aria-selected="false" aria-controls="table-panel" tabindex="-1">All restaurants <span aria-hidden="true">≡</span></button>
+      </div>
+      <span id="match-count" role="status"></span>
+    </div>
+    <form id="filters" class="filters" aria-label="Filter restaurants">
+      <label class="search-label">What sounds good?<input type="search" name="search" placeholder="A cuisine, a place, a craving…"></label>
+      <label>Cuisine<select name="cuisine"><option value="">Anything goes</option></select></label>
+      <label>Distance<select name="distance">
+        <option value="">Up for a drive</option><option value="3">Within ~3 mi</option><option value="5">Within ~5 mi</option><option value="6">Within ~6 mi</option><option value="10">Within ~10 mi</option><option value="15">Within ~15 mi</option><option value="25">Within ~25 mi</option>
+      </select></label>
+      <label>Price<select name="price"><option value="">Any budget</option><option value="1">$</option><option value="2">$$</option><option value="3">$$$</option><option value="4">$$$$</option></select></label>
+      <label>Dining<select name="service"><option value="">Eat-in or takeout</option><option value="eat-in">Eat-in</option><option value="takeout">Takeout</option></select></label>
+      <button type="reset" class="reset-button">Reset</button>
+    </form>
+    <section id="spin-panel" role="tabpanel" aria-labelledby="spin-tab">
+      <div class="spinner-layout">
+        <div class="wheel-column">
+          <div class="wheel-wrap"><span class="pointer" aria-hidden="true"></span><svg id="wheel" viewBox="0 0 500 500" role="img" aria-label="Wheel of matching restaurants"></svg><span class="wheel-center" aria-hidden="true">where<br>to?</span></div>
+          <button id="spin-button" class="primary-button">Give it a spin <span aria-hidden="true">↻</span></button>
+          <p id="spin-note" class="wheel-note">Every spot has an equal shot. Trust the wheel.</p>
+        </div>
+        <div class="result-column">
+          <p class="eyebrow">LET FATE ORDER</p>
+          <div id="result" aria-live="polite" aria-atomic="true">
+            <h2>A little indecision.<br>A lot of good food.</h2>
+            <p>Set your mood with the filters, then give the wheel a whirl. Your next favorite could be just around the corner.</p>
+            <div class="dinner-stamp" aria-hidden="true">LESS DEBATE<br><span>more dinner</span><br>EST. RIGHT NOW</div>
+          </div>
+          <p class="result-footnote">No wrong answers. Just dinner.</p>
+        </div>
+      </div>
+    </section>
+    <section id="table-panel" role="tabpanel" aria-labelledby="table-tab" hidden>
+      <div class="table-heading"><h2>The local lineup.</h2><p>Browse, narrow it down, make a plan.</p></div>
+      <div class="table-scroll" tabindex="0" role="region" aria-label="Restaurant table, scroll horizontally for more details">
+        <table><caption class="sr-only">Restaurants near Sully Elementary matching your filters</caption>
+          <thead><tr><th scope="col">Restaurant</th><th scope="col">Distance</th><th scope="col">Cuisine</th><th scope="col">Price</th><th scope="col">Hours</th><th scope="col">Location</th><th scope="col">Dining</th><th scope="col">Yelp</th></tr></thead>
+          <tbody id="restaurant-rows"></tbody>
+        </table>
+      </div>
+      <p id="table-empty" class="empty-state" hidden>No spots match this combination. Try a wider search or reset your filters.</p>
+    </section>
+    <noscript><p>This picker needs JavaScript enabled to display the restaurants and spin the wheel.</p></noscript>
+  </main>
+  <footer><span>Made for hungry neighbors.</span><p>Distances are approximate driving ranges from Sully Elementary.<br>Hours and prices are a starting point; check with the restaurant before heading out.</p><span class="footer-mark">Bon appétit. <span aria-hidden="true">↗</span></span></footer>
+</body>
+</html>
