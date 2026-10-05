@@ -2,8 +2,9 @@
 
 A dependency-free website for choosing from 18 restaurants near Sully Elementary
 in Sterling, Virginia. Spin the animated wheel or switch to **All restaurants**
-for the full table. Search and cuisine, distance, price, and dining filters apply
-to both views. Each matching restaurant has an equal chance on the wheel.
+for the full table. Search and cuisine, distance, price, dining, open-now, and
+time filters apply to both views. Each matching restaurant has an equal chance
+on the wheel.
 
 ## Run locally
 

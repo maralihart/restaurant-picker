@@ -148,9 +148,11 @@ for (const cuisine of cuisineOptions) {
   option.value = cuisine;
   filters.elements.cuisine.append(option);
 }
-for (const name of ["search", "cuisine", "distance", "price", "service"]) {
-  filters.elements[name].value = new URLSearchParams(window.location.search).get(name) || "";
+const initialFilters = new URLSearchParams(window.location.search);
+for (const name of ["search", "cuisine", "distance", "price", "service", "time"]) {
+  filters.elements[name].value = initialFilters.get(name) || "";
 }
+filters.elements.openNow.checked = initialFilters.get("openNow") === "true";
 filters.addEventListener("submit", event => event.preventDefault());
 filters.addEventListener("input", update);
 filters.addEventListener("reset", () => setTimeout(update, 0));

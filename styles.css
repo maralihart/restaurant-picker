@@ -48,6 +48,8 @@ h1 span { color: var(--accent); }
 .filters { display: flex; gap: 18px; align-items: flex-end; padding: 25px 0; border-bottom: 1px solid var(--line); }
 .filters label { display: flex; flex: 1; min-width: 0; flex-direction: column; gap: 8px; font-size: 11px; font-weight: 700; }
 .filters .search-label { flex: 1.7; }
+.filters .checkbox-label { flex: 0 0 auto; flex-direction: row; align-items: center; gap: 8px; }
+.filters input[type="checkbox"] { width: 18px; height: 18px; padding: 0; }
 .filter-button { display: none; }
 .filter-dialog { position: static; display: block; width: 100%; max-width: none; max-height: none; overflow: visible; margin: 0; padding: 0; border: 0; color: inherit; background: transparent; }
 .filter-dialog::backdrop { background: transparent; }

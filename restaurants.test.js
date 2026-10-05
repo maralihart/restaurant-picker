@@ -44,6 +44,20 @@ test("filters combine and impossible combinations return an empty list", () => {
   assert.deepEqual(filterRestaurants(restaurants, { search: "no such restaurant" }), []);
 });
 
+test("open-now and selected-time filters respect weekdays and split shifts", () => {
+  const mondayNoon = new Date(2026, 9, 5, 12);
+  const nowMatches = filterRestaurants(restaurants, { openNow: "true", now: mondayNoon });
+  assert.ok(nowMatches.some(item => item.name === "ChiMc"));
+  assert.ok(!nowMatches.some(item => item.name === "Heirloom"));
+  assert.ok(!filterRestaurants(restaurants, { time: "15:00", now: mondayNoon })
+    .some(item => item.name === "Local Provisions"));
+  assert.ok(filterRestaurants(restaurants, { time: "17:00", now: mondayNoon })
+    .some(item => item.name === "Local Provisions"));
+  assert.ok(!filterRestaurants(restaurants, { cuisine: "Vietnamese", time: "12:00", now: new Date(2026, 9, 6, 12) }).length);
+  assert.ok(!filterRestaurants(restaurants, { openNow: "true", time: "17:00", now: mondayNoon })
+    .some(item => item.name === "Heirloom"));
+});
+
 test("selection handles zero, one, and every possible matching restaurant", () => {
   assert.equal(chooseRestaurant([]), null);
   assert.equal(chooseRestaurant([restaurants[0]]), restaurants[0]);
@@ -57,7 +71,7 @@ test("selection handles zero, one, and every possible matching restaurant", () =
 
 test("filter deeplinks preserve all active filters and clear inactive ones", () => {
   const url = new URL(restaurantFilterUrl(
-    { search: "Korean food", cuisine: "Korean", distance: "", price: "2", service: "takeout" },
+    { search: "Korean food", cuisine: "Korean", distance: "", price: "2", service: "takeout", openNow: "true", time: "17:00" },
     "https://example.com/picker/?distance=5&old=1#spin",
   ));
   assert.equal(url.searchParams.get("search"), "Korean food");
@@ -65,6 +79,8 @@ test("filter deeplinks preserve all active filters and clear inactive ones", () 
   assert.equal(url.searchParams.has("distance"), false);
   assert.equal(url.searchParams.get("price"), "2");
   assert.equal(url.searchParams.get("service"), "takeout");
+  assert.equal(url.searchParams.get("openNow"), "true");
+  assert.equal(url.searchParams.get("time"), "17:00");
   assert.equal(url.searchParams.get("old"), "1");
   assert.equal(url.hash, "#spin");
 });
