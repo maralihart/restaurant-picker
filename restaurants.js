@@ -1,3 +1,49 @@
+const dayNames = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+
+function parseClock(value, closing, openingMinute = 0) {
+  const [hour, minute = "0"] = value.split(":").map(Number);
+  if (!closing) return (hour === 12 ? 12 : hour <= 6 ? hour + 12 : hour) * 60 + minute;
+  if (hour === 12) return openingMinute >= 16 * 60 ? 24 * 60 : 12 * 60;
+  return (hour <= 11 ? hour + 12 : hour) * 60 + minute;
+}
+
+function parseOpeningHours(hours) {
+  const schedule = Array.from({ length: 7 }, () => []);
+  for (const clause of hours.split(";")) {
+    const text = clause.trim();
+    const firstTime = text.search(/~?\d{1,2}(?::\d{2})?(?:\/\d{1,2}(?::\d{2})?)?–/);
+    if (firstTime < 0) continue;
+    const dayLabel = text.slice(0, firstTime).trim();
+    const hoursText = text.slice(firstTime).replaceAll("~", "");
+    const days = dayLabel === "Daily"
+      ? dayNames.map((_, index) => index)
+      : dayLabel.split(", ").flatMap(range => {
+        const [first, last = first] = range.split("–");
+        const start = dayNames.indexOf(first);
+        const end = dayNames.indexOf(last);
+        if (start < 0 || end < 0) return [];
+        const result = [];
+        for (let day = start; day !== -1; day = (day + 1) % 7) {
+          result.push(day);
+          if (day === end) break;
+        }
+        return result;
+      });
+    for (const range of hoursText.split(" & ")) {
+      const times = range.matchAll(/(\d{1,2}(?::\d{2})?(?:\/\d{1,2}(?::\d{2})?)?)–(\d{1,2}(?::\d{2})?)/g);
+      for (const [, opens, closes] of times) {
+        const openingTimes = opens.split("/");
+        for (const [index, day] of days.entries()) {
+          const openingMinute = parseClock(openingTimes[index] || openingTimes[0], false);
+          const closingMinute = parseClock(closes, true, openingMinute);
+          schedule[day].push([openingMinute, closingMinute]);
+        }
+      }
+    }
+  }
+  return schedule;
+}
+
 const entries = [
   ["Saigon Bistro", "Vietnamese", [2], "$$ · ~$15–25", "Mon, Wed–Sun 11–9; Tue closed", "47100 Community Plaza #124, Sterling", "Both", [0, 3]],
   ["Laziz Kabob & Karahi", "Afghan / Pakistani / Middle Eastern", [2], "$$ · ~$16–30", "Sun 10–10; Mon–Thu 11–10; Fri–Sat 10–10:30", "47100 Community Plaza #114, Sterling", "Both", [0, 3], "Laziz Kabob"],
@@ -22,6 +68,7 @@ const entries = [
 export const restaurants = entries.map(([name, cuisine, priceLevels, price, hours, location, service, distance, yelpName]) => ({
   name, cuisine, priceLevels, price, hours, location, service, distance,
   distanceLabel: `~${distance[0]}–${distance[1]} mi`,
+  openingHours: parseOpeningHours(hours),
   takeout: service.startsWith("Both"),
   yelp: name === "Urban Hot Pot Mosaic"
     ? "https://www.yelp.com/biz/urban-hot-pot-mosaic-fairfax"
@@ -31,14 +78,22 @@ export const restaurants = entries.map(([name, cuisine, priceLevels, price, hour
     })}`,
 }));
 
-export function filterRestaurants(list, { search = "", cuisine = "", distance = "", price = "", service = "" } = {}) {
+export function filterRestaurants(list, { search = "", cuisine = "", distance = "", price = "", service = "", openNow = "", time = "", now = new Date() } = {}) {
   const query = search.trim().toLowerCase();
+  const isOpenAt = (restaurant, date, minute) => restaurant.openingHours[date.getDay()]
+    .some(([opens, closes]) => opens <= minute && minute < closes);
+  const timeMatch = time.match(/^(\d{2}):(\d{2})$/);
+  const timeIsValid = !timeMatch || (Number(timeMatch[1]) < 24 && Number(timeMatch[2]) < 60);
+  const timeMinute = timeMatch ? Number(timeMatch[1]) * 60 + Number(timeMatch[2]) : 0;
+  const nowMinute = now.getHours() * 60 + now.getMinutes();
   return list.filter(restaurant =>
     (!query || `${restaurant.name} ${restaurant.cuisine} ${restaurant.location}`.toLowerCase().includes(query)) &&
     (!cuisine || restaurant.cuisine.toLowerCase().includes(cuisine.toLowerCase())) &&
     (!distance || restaurant.distance[1] <= Number(distance)) &&
     (!price || restaurant.priceLevels.includes(Number(price))) &&
-    (service !== "takeout" || restaurant.takeout)
+    (service !== "takeout" || restaurant.takeout) &&
+    (!openNow || isOpenAt(restaurant, now, nowMinute)) &&
+    (!time || (timeIsValid && isOpenAt(restaurant, now, timeMinute)))
   );
 }
 
@@ -48,9 +103,9 @@ export function chooseRestaurant(list, random = Math.random) {
 
 export function restaurantFilterUrl(filters, baseUrl) {
   const url = new URL(baseUrl);
-  for (const name of ["search", "cuisine", "distance", "price", "service"]) {
+  for (const name of ["search", "cuisine", "distance", "price", "service", "openNow", "time"]) {
     url.searchParams.delete(name);
-    if (filters[name]) url.searchParams.set(name, filters[name]);
+    if (filters[name]) url.searchParams.set(name, filters[name] === "on" ? "true" : filters[name]);
   }
   return url.href;
 }
